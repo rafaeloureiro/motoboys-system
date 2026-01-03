@@ -1,6 +1,6 @@
 """
-Assistente de IA integrado com Google Gemini 2.5 Flash
-Otimizado para Streamlit Cloud 2026
+Assistente de IA integrado com Google Gemini 1.5 Flash
+Otimizado para Streamlit Cloud
 Usando a nova biblioteca google.genai
 """
 from google import genai
@@ -13,30 +13,20 @@ import utils
 def configurar_gemini():
     """
     Configura o cliente Gemini com a API key (cached)
-
-    Returns:
-        Cliente Gemini configurado
     """
     try:
+        # Busca a chave no formato [google] api_key = "..."
         api_key = st.secrets["google"]["api_key"]
         client = genai.Client(api_key=api_key)
         return client
     except Exception as e:
-        st.error(f"Erro ao configurar Gemini: {e}")
+        st.error(f"Erro ao configurar Gemini: {e}. Verifique o arquivo secrets.toml")
         return None
 
 
 def preparar_contexto(kpis_hoje, relatorio_semanal, config):
     """
     Prepara o contexto com dados do sistema para o assistente
-
-    Args:
-        kpis_hoje: Dicionário com KPIs do dia
-        relatorio_semanal: Lista com dados consolidados da semana
-        config: Configurações atuais (valor_diaria, valor_corrida)
-
-    Returns:
-        String formatada com o contexto
     """
     contexto = f"""
 📊 DADOS DO SISTEMA - CONTROLE DE MOTOBOYS
@@ -73,15 +63,6 @@ def preparar_contexto(kpis_hoje, relatorio_semanal, config):
 def get_gemini_response(user_message, kpis_hoje, relatorio_semanal, config):
     """
     Obtém resposta do Gemini com contexto do sistema
-
-    Args:
-        user_message: Mensagem do usuário
-        kpis_hoje: KPIs do dia atual
-        relatorio_semanal: Dados consolidados da semana
-        config: Configurações atuais
-
-    Returns:
-        Resposta do assistente
     """
     try:
         client = configurar_gemini()
@@ -91,7 +72,7 @@ def get_gemini_response(user_message, kpis_hoje, relatorio_semanal, config):
         # Preparar contexto com dados reais
         contexto = preparar_contexto(kpis_hoje, relatorio_semanal, config)
 
-        # Prompt do sistema
+        # Prompt do sistema (System Instruction)
         system_instruction = f"""
 Você é um assistente especializado em logística e gestão de entregas. Seu nome é "Assistente Motoboy AI".
 
@@ -99,29 +80,21 @@ CONTEXTO DO SISTEMA:
 {contexto}
 
 INSTRUÇÕES:
-1. Use SEMPRE os dados reais fornecidos acima para responder
-2. Seja direto e objetivo nas respostas
-3. Use português brasileiro
-4. Formate valores monetários no padrão R$ 1.234,56
-5. Sugira melhorias de eficiência quando apropriado
-6. Identifique padrões e anomalias nos dados
-7. Ajude com análises de custo-benefício
-8. Proponha otimizações operacionais
-
-TIPOS DE ANÁLISES QUE VOCÊ PODE FAZER:
-- Análise de produtividade por motoboy
-- Comparação entre motoboys fixos e freelancers
-- Identificação de custos altos
-- Sugestões de economia
-- Previsões e tendências
-- Avaliação de eficiência operacional
+1. Use SEMPRE os dados reais fornecidos acima para responder.
+2. Seja direto e objetivo nas respostas.
+3. Use português brasileiro.
+4. Formate valores monetários no padrão R$ 1.234,56.
+5. Sugira melhorias de eficiência quando apropriado.
+6. Identifique padrões e anomalias nos dados.
+7. Ajude com análises de custo-benefício.
 
 Responda de forma profissional, mas acessível. Use emojis ocasionalmente para facilitar a leitura.
 """
 
         # Gerar resposta usando a nova API
+        # CORREÇÃO: Usando 'gemini-1.5-flash' sem o prefixo 'models/'
         response = client.models.generate_content(
-            model='models/gemini-1.5-flash',
+            model='gemini-1.5-flash',
             contents=user_message,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -132,15 +105,12 @@ Responda de forma profissional, mas acessível. Use emojis ocasionalmente para f
         return response.text
 
     except Exception as e:
-        return f"❌ Erro ao processar sua pergunta: {str(e)}\n\nVerifique se a API key do Google Gemini está configurada corretamente no arquivo .streamlit/secrets.toml"
+        return f"❌ Erro ao processar sua pergunta: {str(e)}"
 
 
 def sugerir_perguntas():
     """
     Retorna lista de perguntas sugeridas para o usuário
-
-    Returns:
-        Lista de strings com perguntas sugeridas
     """
     return [
         "Qual motoboy foi mais produtivo esta semana?",
