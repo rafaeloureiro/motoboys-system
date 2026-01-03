@@ -197,4 +197,4 @@ Para questões sobre:
 
 ---
 
-Desenvolvido com ❤️ usando Streamlit + Supabase + Gemini AI
+Desenvolvido usando Streamlit + Supabase + Gemini AI
