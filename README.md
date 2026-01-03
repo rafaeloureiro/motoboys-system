@@ -18,7 +18,7 @@ Sistema completo de gestão de entregas e motoboys desenvolvido com **Streamlit*
   - Média Entregas/Motoboy
   - Custo Total
   - Custo Médio por Entrega
-- 📈 **Seção C - Relatório Semanal**: Consolidação segunda-feira até domingo
+- 📈 **Seção C - Relatório Semanal**: Consolidação segunda-feira até hoje
   - Tabela com dados por motoboy
   - Gráficos interativos
   - Cálculo automático de valores devidos
@@ -197,4 +197,4 @@ Para questões sobre:
 
 ---
 
-Desenvolvido usando Streamlit + Supabase + Gemini AI
+Desenvolvido com ❤️ usando Streamlit + Supabase + Gemini AI
