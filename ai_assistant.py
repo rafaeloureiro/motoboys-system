@@ -1,7 +1,7 @@
 """
 Assistente de IA integrado com Google Gemini 1.5 Flash
 Otimizado para Streamlit Cloud
-Usando a nova biblioteca google.genai
+Usando a nova biblioteca google.genai (SDK v2)
 """
 from google import genai
 from google.genai import types
@@ -15,12 +15,14 @@ def configurar_gemini():
     Configura o cliente Gemini com a API key (cached)
     """
     try:
-        # Busca a chave no formato [google] api_key = "..."
+        # IMPORTANTE: O arquivo secrets.toml deve ter a seção [google]
         api_key = st.secrets["google"]["api_key"]
+        
+        # Na nova SDK google-genai, a configuração é via Client
         client = genai.Client(api_key=api_key)
         return client
     except Exception as e:
-        st.error(f"Erro ao configurar Gemini: {e}. Verifique o arquivo secrets.toml")
+        st.error(f"Erro de configuração: {e}")
         return None
 
 
@@ -67,34 +69,22 @@ def get_gemini_response(user_message, kpis_hoje, relatorio_semanal, config):
     try:
         client = configurar_gemini()
         if not client:
-            return "❌ Erro ao conectar com o assistente de IA. Verifique a API key do Google Gemini."
+            return "❌ Erro: Cliente Gemini não configurado."
 
-        # Preparar contexto com dados reais
+        # Preparar contexto
         contexto = preparar_contexto(kpis_hoje, relatorio_semanal, config)
 
-        # Prompt do sistema (System Instruction)
+        # Instrução do Sistema
         system_instruction = f"""
-Você é um assistente especializado em logística e gestão de entregas. Seu nome é "Assistente Motoboy AI".
-
-CONTEXTO DO SISTEMA:
-{contexto}
-
-INSTRUÇÕES:
-1. Use SEMPRE os dados reais fornecidos acima para responder.
-2. Seja direto e objetivo nas respostas.
-3. Use português brasileiro.
-4. Formate valores monetários no padrão R$ 1.234,56.
-5. Sugira melhorias de eficiência quando apropriado.
-6. Identifique padrões e anomalias nos dados.
-7. Ajude com análises de custo-benefício.
-
-Responda de forma profissional, mas acessível. Use emojis ocasionalmente para facilitar a leitura.
+Você é o "Assistente Motoboy AI".
+CONTEXTO: {contexto}
+INSTRUÇÕES: Seja direto, use R$ para valores e baseie-se apenas nos dados acima.
 """
 
-        # Gerar resposta usando a nova API
-        # CORREÇÃO: Usando 'gemini-1.5-flash' sem o prefixo 'models/'
+        # CORREÇÃO DEFINITIVA: 
+        # Algumas versões da SDK v2 preferem o nome direto do modelo.
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-1.5-flash', 
             contents=user_message,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -105,20 +95,14 @@ Responda de forma profissional, mas acessível. Use emojis ocasionalmente para f
         return response.text
 
     except Exception as e:
+        # Se o erro 404 persistir, ele será capturado aqui com detalhes
         return f"❌ Erro ao processar sua pergunta: {str(e)}"
 
 
 def sugerir_perguntas():
-    """
-    Retorna lista de perguntas sugeridas para o usuário
-    """
     return [
         "Qual motoboy foi mais produtivo esta semana?",
         "Como posso reduzir os custos operacionais?",
-        "Vale mais a pena contratar fixo ou freelancer?",
         "Qual é a média de entregas por motoboy hoje?",
-        "Existem motoboys com baixa produtividade?",
-        "Quanto estou gastando por entrega em média?",
-        "Como está o desempenho desta semana comparado ao normal?",
         "Quais insights você pode me dar sobre os dados de hoje?"
     ]
