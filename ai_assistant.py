@@ -121,7 +121,7 @@ Responda de forma profissional, mas acessível. Use emojis ocasionalmente para f
 
         # Gerar resposta usando a nova API
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='models/gemini-1.5-flash',
             contents=user_message,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
