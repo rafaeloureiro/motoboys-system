@@ -1,7 +1,7 @@
 """
 Assistente de IA integrado com Google Gemini 1.5 Flash
 Otimizado para Streamlit Cloud
-Usando a nova biblioteca google.genai (SDK v2)
+Usando a biblioteca google-genai
 """
 from google import genai
 from google.genai import types
@@ -12,17 +12,17 @@ import utils
 @st.cache_resource
 def configurar_gemini():
     """
-    Configura o cliente Gemini com a API key (cached)
+    Configura o cliente Gemini usando a estrutura st.secrets["google"]["api_key"]
     """
     try:
-        # IMPORTANTE: O arquivo secrets.toml deve ter a seção [google]
+        # Pega a chave do seu secrets.toml conforme a estrutura que você enviou
         api_key = st.secrets["google"]["api_key"]
         
-        # Na nova SDK google-genai, a configuração é via Client
+        # Inicializa o cliente da nova SDK
         client = genai.Client(api_key=api_key)
         return client
     except Exception as e:
-        st.error(f"Erro de configuração: {e}")
+        st.error(f"Erro ao ler segredos: {e}. Verifique se a chave em [google] está correta.")
         return None
 
 
@@ -64,27 +64,24 @@ def preparar_contexto(kpis_hoje, relatorio_semanal, config):
 
 def get_gemini_response(user_message, kpis_hoje, relatorio_semanal, config):
     """
-    Obtém resposta do Gemini com contexto do sistema
+    Obtém resposta do Gemini com tratamento de erro 404
     """
     try:
         client = configurar_gemini()
         if not client:
-            return "❌ Erro: Cliente Gemini não configurado."
+            return "❌ Erro: API Key não encontrada no secrets."
 
-        # Preparar contexto
         contexto = preparar_contexto(kpis_hoje, relatorio_semanal, config)
 
-        # Instrução do Sistema
         system_instruction = f"""
-Você é o "Assistente Motoboy AI".
-CONTEXTO: {contexto}
-INSTRUÇÕES: Seja direto, use R$ para valores e baseie-se apenas nos dados acima.
+Você é o "Assistente Motoboy AI", especialista em logística.
+Use estes dados: {contexto}
+Responda de forma direta e profissional em português.
 """
 
-        # CORREÇÃO DEFINITIVA: 
-        # Algumas versões da SDK v2 preferem o nome direto do modelo.
+        # O modelo deve ser passado sem o prefixo 'models/' na SDK google-genai
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='gemini-1.5-flash',
             contents=user_message,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -95,14 +92,13 @@ INSTRUÇÕES: Seja direto, use R$ para valores e baseie-se apenas nos dados acim
         return response.text
 
     except Exception as e:
-        # Se o erro 404 persistir, ele será capturado aqui com detalhes
-        return f"❌ Erro ao processar sua pergunta: {str(e)}"
+        # Se o erro 404 persistir, verifique se a Generative Language API está ativa no Google Cloud
+        return f"❌ Erro na API Gemini: {str(e)}"
 
 
 def sugerir_perguntas():
     return [
-        "Qual motoboy foi mais produtivo esta semana?",
-        "Como posso reduzir os custos operacionais?",
-        "Qual é a média de entregas por motoboy hoje?",
-        "Quais insights você pode me dar sobre os dados de hoje?"
+        "Qual motoboy foi mais produtivo?",
+        "Como reduzir custos hoje?",
+        "Análise de desempenho semanal"
     ]
